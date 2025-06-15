@@ -5,6 +5,7 @@ const faseDiv = document.getElementById('fase');
 const vidaDiv = document.getElementById('vidaNave');
 const finalDiv = document.getElementById('final');
 
+// Resize canvas
 function resize() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -198,4 +199,5 @@ function loop() {
   if (!jogoFinalizado) animationId = requestAnimationFrame(loop);
 }
 
-window.onload = resetGame;
+// Use DOMContentLoaded para garantir que tudo foi carregado antes de iniciar o jogo
+document.addEventListener('DOMContentLoaded', resetGame);
