@@ -37,6 +37,7 @@ function resetGame() {
   tempoDisparo = 0;
   jogoFinalizado = false;
   finalDiv.classList.add('hidden');
+  finalDiv.innerHTML = "";
   spawnInimigos(5 + fase * 2);
   loop();
 }
@@ -147,16 +148,20 @@ function atualizar() {
 
   if (nave.vida <= 0) {
     jogoFinalizado = true;
+    finalDiv.innerHTML = `<p style="color: red; font-size: 2rem;">Game Over! Tente novamente 😢</p>`;
+    finalDiv.classList.remove('hidden');
     setTimeout(() => {
-      resetGame(); // Reinicia jogo sem mostrar mensagem final
-    }, 2000);
+      finalDiv.classList.add('hidden');
+      resetGame();
+    }, 2500);
+    return;
   }
 
   if (boss && boss.vida <= 0) {
     boss = null;
     if (fase >= 21) {
       jogoFinalizado = true;
-      finalDiv.innerHTML = `<img src="./assets/coracao.png" alt="Coração"><p>Viu amor, as vezes nosso relacionamento vai ser como esse jogo, haverão fases difíceis, porém, com esforço nós vamos superar juntos, eu amo voce 🌹</p>`;
+      finalDiv.innerHTML = `<img src="./assets/coracao.png" alt="Coração"><p>Viu amor, as vezes nosso relacionamento vai ser como esse jogo, haverão fases difíceis, porém, com esforço nós sempre vencemos juntos. Te amo! 💖</p>`;
       finalDiv.classList.remove('hidden');
     } else {
       fase++;
