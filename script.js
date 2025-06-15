@@ -5,7 +5,6 @@ const faseDiv = document.getElementById('fase');
 const vidaDiv = document.getElementById('vidaNave');
 const finalDiv = document.getElementById('final');
 
-// Resize canvas
 function resize() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -13,64 +12,59 @@ function resize() {
 resize();
 window.addEventListener('resize', resize);
 
-// Imagens
-const naveImg = new Image();
-naveImg.src = './assets/nave1.png';
-const inimigoImg = new Image();
-inimigoImg.src = './assets/inimigo.png';
-const tiroNaveImg = new Image();
-tiroNaveImg.src = './assets/tiro_nave.png';
-const tiroInimigoImg = new Image();
-tiroInimigoImg.src = './assets/tiro_inimigo.png';
-const bossImg = new Image();
-bossImg.src = './assets/inimigo.png';
-
-let nave, tiros, inimigos, tirosInimigos, fase, boss;
-let tempoDisparo;
-let jogoFinalizado;
-let animationId;
-
-function resetGame() {
-  nave = { x: canvas.width / 2, y: canvas.height - 150, w: 70, h: 70, vida: 5 };
-  tiros = [];
-  inimigos = [];
-  tirosInimigos = [];
-  fase = 1;
-  boss = null;
-  tempoDisparo = 0;
-  jogoFinalizado = false;
-  finalDiv.classList.add('hidden');
-  finalDiv.innerHTML = "";
-  spawnInimigos(5 + fase * 2);
-  cancelAnimationFrame(animationId);
-  loop();
+// Carregamento robusto de imagens
+function loadImages(sources, callback, errorCallback) {
+  let loaded = 0;
+  let hasError = false;
+  const total = Object.keys(sources).length;
+  const images = {};
+  for (const key in sources) {
+    images[key] = new Image();
+    images[key].src = sources[key];
+    images[key].onload = () => {
+      loaded++;
+      if (loaded === total && !hasError) callback(images);
+    };
+    images[key].onerror = () => {
+      hasError = true;
+      if (errorCallback) errorCallback(key, sources[key]);
+    };
+  }
 }
 
-// Input para DESKTOP
-canvas.addEventListener('mousemove', function(e) {
-  if (jogoFinalizado) return;
-  const rect = canvas.getBoundingClientRect();
-  nave.x = e.clientX - rect.left;
-  nave.y = e.clientY - rect.top;
-});
+let naveImg, inimigoImg, tiroNaveImg, tiroInimigoImg, bossImg;
+let nave, tiros, inimigos, tirosInimigos, fase, boss;
+let tempoDisparo;
+let jogoFinalizado = false;
+let animationId;
 
-// Input para MOBILE
-canvas.addEventListener('touchmove', function(e) {
-  if (jogoFinalizado) return;
-  if (e.touches.length > 0) {
+// Movimento
+function setupInput() {
+  // Mouse
+  canvas.addEventListener('mousemove', function(e) {
+    if (jogoFinalizado) return;
     const rect = canvas.getBoundingClientRect();
-    nave.x = e.touches[0].clientX - rect.left;
-    nave.y = e.touches[0].clientY - rect.top;
-  }
-  e.preventDefault();
-}, {passive: false});
+    nave.x = e.clientX - rect.left;
+    nave.y = e.clientY - rect.top;
+  });
 
-// Impede a tela de rolar ao tocar no canvas (importante para mobile!)
-canvas.addEventListener('touchstart', function(e) {
-  e.preventDefault();
-}, {passive: false});
+  // Touch
+  canvas.addEventListener('touchmove', function(e) {
+    if (jogoFinalizado) return;
+    if (e.touches.length > 0) {
+      const rect = canvas.getBoundingClientRect();
+      nave.x = e.touches[0].clientX - rect.left;
+      nave.y = e.touches[0].clientY - rect.top;
+    }
+    e.preventDefault();
+  }, {passive: false});
 
-// Spawna inimigos
+  // Impede scroll ao tocar no canvas
+  canvas.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+  }, {passive: false});
+}
+
 function spawnInimigos(qtd) {
   inimigos = [];
   for (let i = 0; i < qtd; i++) {
@@ -103,12 +97,48 @@ function desenharFundo() {
 
 function desenhar() {
   desenharFundo();
-  ctx.drawImage(naveImg, nave.x - nave.w / 2, nave.y - nave.h / 2, nave.w, nave.h);
-  tiros.forEach(t => ctx.drawImage(tiroNaveImg, t.x - 5, t.y - 10, 10, 20));
-  inimigos.forEach(i => ctx.drawImage(inimigoImg, i.x, i.y, i.w, i.h));
-  tirosInimigos.forEach(t => ctx.drawImage(tiroInimigoImg, t.x - 5, t.y - 10, 10, 20));
+  // Protege contra erro se imagem não carregou
+  if (naveImg.complete && naveImg.naturalWidth > 0) {
+    ctx.drawImage(naveImg, nave.x - nave.w / 2, nave.y - nave.h / 2, nave.w, nave.h);
+  } else {
+    ctx.fillStyle = "yellow";
+    ctx.fillRect(nave.x - nave.w / 2, nave.y - nave.h / 2, nave.w, nave.h);
+  }
+
+  tiros.forEach(t => {
+    if (tiroNaveImg.complete && tiroNaveImg.naturalWidth > 0) {
+      ctx.drawImage(tiroNaveImg, t.x - 5, t.y - 10, 10, 20);
+    } else {
+      ctx.fillStyle = "white";
+      ctx.fillRect(t.x - 3, t.y - 10, 6, 20);
+    }
+  });
+
+  inimigos.forEach(i => {
+    if (inimigoImg.complete && inimigoImg.naturalWidth > 0) {
+      ctx.drawImage(inimigoImg, i.x, i.y, i.w, i.h);
+    } else {
+      ctx.fillStyle = "red";
+      ctx.fillRect(i.x, i.y, i.w, i.h);
+    }
+  });
+
+  tirosInimigos.forEach(t => {
+    if (tiroInimigoImg.complete && tiroInimigoImg.naturalWidth > 0) {
+      ctx.drawImage(tiroInimigoImg, t.x - 5, t.y - 10, 10, 20);
+    } else {
+      ctx.fillStyle = "orange";
+      ctx.fillRect(t.x - 3, t.y - 10, 6, 20);
+    }
+  });
+
   if (boss) {
-    ctx.drawImage(bossImg, boss.x, boss.y, boss.w, boss.h);
+    if (bossImg.complete && bossImg.naturalWidth > 0) {
+      ctx.drawImage(bossImg, boss.x, boss.y, boss.w, boss.h);
+    } else {
+      ctx.fillStyle = "purple";
+      ctx.fillRect(boss.x, boss.y, boss.w, boss.h);
+    }
     ctx.fillStyle = 'red';
     ctx.fillRect(boss.x, boss.y - 10, boss.w * (boss.vida / (5 + fase * 3)), 5);
   }
@@ -199,5 +229,46 @@ function loop() {
   if (!jogoFinalizado) animationId = requestAnimationFrame(loop);
 }
 
-// Use DOMContentLoaded para garantir que tudo foi carregado antes de iniciar o jogo
-document.addEventListener('DOMContentLoaded', resetGame);
+function resetGame() {
+  nave = { x: canvas.width / 2, y: canvas.height - 150, w: 70, h: 70, vida: 5 };
+  tiros = [];
+  inimigos = [];
+  tirosInimigos = [];
+  fase = 1;
+  boss = null;
+  tempoDisparo = 0;
+  jogoFinalizado = false;
+  finalDiv.classList.add('hidden');
+  finalDiv.innerHTML = "";
+  spawnInimigos(5 + fase * 2);
+  cancelAnimationFrame(animationId);
+  loop();
+}
+
+// Inicialização: só inicia quando TODAS as imagens carregarem!
+document.addEventListener('DOMContentLoaded', () => {
+  loadImages({
+    nave: './assets/nave1.png',
+    inimigo: './assets/inimigo.png',
+    tiroNave: './assets/tiro_nave.png',
+    tiroInimigo: './assets/tiro_inimigo.png',
+    boss: './assets/inimigo.png'
+  }, function(imgs) {
+    naveImg = imgs.nave;
+    inimigoImg = imgs.inimigo;
+    tiroNaveImg = imgs.tiroNave;
+    tiroInimigoImg = imgs.tiroInimigo;
+    bossImg = imgs.boss;
+    setupInput();
+    resetGame();
+  }, function(falhou, url) {
+    alert(`Erro ao carregar a imagem: ${url}\nO jogo vai usar desenhos simples no lugar.`);
+    naveImg = new Image(); // vazio, vai desenhar como bloco
+    inimigoImg = new Image();
+    tiroNaveImg = new Image();
+    tiroInimigoImg = new Image();
+    bossImg = new Image();
+    setupInput();
+    resetGame();
+  });
+});
