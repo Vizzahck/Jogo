@@ -26,6 +26,7 @@ bossImg.src = './assets/inimigo.png';
 let nave, tiros, inimigos, tirosInimigos, fase, boss;
 let tempoDisparo;
 let jogoFinalizado;
+let animationId;
 
 function resetGame() {
   nave = { x: canvas.width / 2, y: canvas.height - 150, w: 70, h: 70, vida: 5 };
@@ -39,30 +40,34 @@ function resetGame() {
   finalDiv.classList.add('hidden');
   finalDiv.innerHTML = "";
   spawnInimigos(5 + fase * 2);
-  // inicia o loop apenas uma vez
-  if (typeof window._gameLoopRunning === 'undefined' || !window._gameLoopRunning) {
-    window._gameLoopRunning = true;
-    loop();
-  }
+  cancelAnimationFrame(animationId); // Garante que não há loops antigos rodando
+  loop();
 }
 
-// Função para atualização contínua da nave
+// Movimentação da nave usando mouse/touch
 function moverNave(e) {
-  if (jogoFinalizado) return; // não move se o jogo acabou
-  const toque = e.touches ? e.touches[0] : e;
+  if (jogoFinalizado) return;
+  let x, y;
+  if (e.touches) {
+    x = e.touches[0].clientX;
+    y = e.touches[0].clientY;
+  } else {
+    x = e.clientX;
+    y = e.clientY;
+  }
   const rect = canvas.getBoundingClientRect();
-  nave.x = toque.clientX - rect.left;
-  nave.y = toque.clientY - rect.top;
+  nave.x = x - rect.left;
+  nave.y = y - rect.top;
 }
-canvas.addEventListener('touchmove', moverNave);
 canvas.addEventListener('mousemove', moverNave);
+canvas.addEventListener('touchmove', moverNave);
 
 function spawnInimigos(qtd) {
   inimigos = [];
   for (let i = 0; i < qtd; i++) {
     inimigos.push({
       x: Math.random() * (canvas.width - 50),
-      y: -Math.random() * 500,
+      y: -Math.random() * 300 - 50,
       w: 50,
       h: 50,
       vida: 1,
@@ -89,13 +94,10 @@ function desenharFundo() {
 
 function desenhar() {
   desenharFundo();
-
   ctx.drawImage(naveImg, nave.x - nave.w / 2, nave.y - nave.h / 2, nave.w, nave.h);
-
   tiros.forEach(t => ctx.drawImage(tiroNaveImg, t.x - 5, t.y - 10, 10, 20));
   inimigos.forEach(i => ctx.drawImage(inimigoImg, i.x, i.y, i.w, i.h));
   tirosInimigos.forEach(t => ctx.drawImage(tiroInimigoImg, t.x - 5, t.y - 10, 10, 20));
-
   if (boss) {
     ctx.drawImage(bossImg, boss.x, boss.y, boss.w, boss.h);
     ctx.fillStyle = 'red';
@@ -157,7 +159,6 @@ function atualizar() {
     finalDiv.classList.remove('hidden');
     setTimeout(() => {
       finalDiv.classList.add('hidden');
-      window._gameLoopRunning = false;
       resetGame();
     }, 2500);
     return;
@@ -169,7 +170,6 @@ function atualizar() {
       jogoFinalizado = true;
       finalDiv.innerHTML = `<img src="./assets/coracao.png" alt="Coração"><p>Viu amor, às vezes nosso relacionamento vai ser como esse jogo, haverão fases difíceis, porém, com esforço nós sempre vencemos juntos. Te amo! 💖</p>`;
       finalDiv.classList.remove('hidden');
-      window._gameLoopRunning = false;
     } else {
       fase++;
       nave.vida = 5;
@@ -187,7 +187,7 @@ function loop() {
   desenhar();
   faseDiv.innerText = 'Fase ' + fase;
   vidaDiv.innerText = '❤️'.repeat(nave.vida);
-  if (!jogoFinalizado) requestAnimationFrame(loop);
+  if (!jogoFinalizado) animationId = requestAnimationFrame(loop);
 }
 
 window.onload = resetGame;
