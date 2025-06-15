@@ -12,6 +12,7 @@ function resize() {
 resize();
 window.addEventListener('resize', resize);
 
+// Imagens
 const naveImg = new Image();
 naveImg.src = './assets/nave1.png';
 const inimigoImg = new Image();
@@ -40,28 +41,35 @@ function resetGame() {
   finalDiv.classList.add('hidden');
   finalDiv.innerHTML = "";
   spawnInimigos(5 + fase * 2);
-  cancelAnimationFrame(animationId); // Garante que não há loops antigos rodando
+  cancelAnimationFrame(animationId);
   loop();
 }
 
-// Movimentação da nave usando mouse/touch
-function moverNave(e) {
+// Input para DESKTOP
+canvas.addEventListener('mousemove', function(e) {
   if (jogoFinalizado) return;
-  let x, y;
-  if (e.touches) {
-    x = e.touches[0].clientX;
-    y = e.touches[0].clientY;
-  } else {
-    x = e.clientX;
-    y = e.clientY;
-  }
   const rect = canvas.getBoundingClientRect();
-  nave.x = x - rect.left;
-  nave.y = y - rect.top;
-}
-canvas.addEventListener('mousemove', moverNave);
-canvas.addEventListener('touchmove', moverNave);
+  nave.x = e.clientX - rect.left;
+  nave.y = e.clientY - rect.top;
+});
 
+// Input para MOBILE
+canvas.addEventListener('touchmove', function(e) {
+  if (jogoFinalizado) return;
+  if (e.touches.length > 0) {
+    const rect = canvas.getBoundingClientRect();
+    nave.x = e.touches[0].clientX - rect.left;
+    nave.y = e.touches[0].clientY - rect.top;
+  }
+  e.preventDefault();
+}, {passive: false});
+
+// Impede a tela de rolar ao tocar no canvas (importante para mobile!)
+canvas.addEventListener('touchstart', function(e) {
+  e.preventDefault();
+}, {passive: false});
+
+// Spawna inimigos
 function spawnInimigos(qtd) {
   inimigos = [];
   for (let i = 0; i < qtd; i++) {
