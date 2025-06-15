@@ -27,6 +27,7 @@ let nave, tiros, inimigos, tirosInimigos, fase, boss;
 let tempoDisparo;
 let jogoFinalizado;
 
+// Função para reiniciar o jogo
 function resetGame() {
   nave = { x: canvas.width / 2, y: canvas.height - 150, w: 70, h: 70, vida: 5 };
   tiros = [];
@@ -42,6 +43,7 @@ function resetGame() {
   loop();
 }
 
+// Movimentação da nave
 function moverNave(e) {
   const toque = e.touches ? e.touches[0] : e;
   const rect = canvas.getBoundingClientRect();
@@ -51,6 +53,7 @@ function moverNave(e) {
 canvas.addEventListener('touchmove', moverNave);
 canvas.addEventListener('mousemove', moverNave);
 
+// Criar inimigos
 function spawnInimigos(qtd) {
   for (let i = 0; i < qtd; i++) {
     inimigos.push({
@@ -64,6 +67,7 @@ function spawnInimigos(qtd) {
   }
 }
 
+// Criar chefe
 function spawnBoss() {
   boss = {
     x: canvas.width / 2 - 75,
@@ -75,11 +79,13 @@ function spawnBoss() {
   };
 }
 
+// Desenhar fundo
 function desenharFundo() {
   ctx.fillStyle = "black";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
+// Desenhar elementos
 function desenhar() {
   desenharFundo();
 
@@ -98,6 +104,7 @@ function desenhar() {
   }
 }
 
+// Lógica do jogo
 function atualizar() {
   if (jogoFinalizado) return;
 
@@ -146,6 +153,7 @@ function atualizar() {
     }
   });
 
+  // Se perder todas as vidas
   if (nave.vida <= 0) {
     jogoFinalizado = true;
     finalDiv.innerHTML = `<p style="color: red; font-size: 2rem;">Game Over! Tente novamente 😢</p>`;
@@ -157,11 +165,12 @@ function atualizar() {
     return;
   }
 
+  // Se derrotar o chefe da última fase
   if (boss && boss.vida <= 0) {
     boss = null;
     if (fase >= 21) {
       jogoFinalizado = true;
-      finalDiv.innerHTML = `<img src="./assets/coracao.png" alt="Coração"><p>Viu amor, as vezes nosso relacionamento vai ser como esse jogo, haverão fases difíceis, porém, com esforço nós sempre vencemos juntos. Te amo! 💖</p>`;
+      finalDiv.innerHTML = `<img src="./assets/coracao.png" alt="Coração"><p>Viu amor, às vezes nosso relacionamento vai ser como esse jogo, haverão fases difíceis, porém, com esforço nós sempre vencemos juntos. Te amo! 💖</p>`;
       finalDiv.classList.remove('hidden');
     } else {
       fase++;
@@ -170,11 +179,13 @@ function atualizar() {
     }
   }
 
+  // Se derrotar todos os inimigos, aparece o chefe
   if (!boss && inimigos.length === 0 && !jogoFinalizado) {
     spawnBoss();
   }
 }
 
+// Loop principal
 function loop() {
   atualizar();
   desenhar();
@@ -183,4 +194,5 @@ function loop() {
   if (!jogoFinalizado) requestAnimationFrame(loop);
 }
 
+// Inicia o jogo ao carregar a página
 window.onload = resetGame;
