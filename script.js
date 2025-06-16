@@ -31,22 +31,9 @@ const bossImg = new Image();
 bossImg.src = './assets/inimigo.png';
 
 // Variáveis
-let nave = {
-    x: canvas.width / 2,
-    y: canvas.height - 150,
-    w: 70,
-    h: 70,
-    vida: 5
-};
-
-let tiros = [];
-let inimigos = [];
-let tirosInimigos = [];
-let fase = 1;
-let boss = null;
-let jogoFinalizado = false;
-let tempoDisparo = 0;
-let inimigosDerrotados = 0;
+let nave, tiros, inimigos, tirosInimigos, fase, boss;
+let mortosNaFase, jogoFinalizado;
+let tempoDisparo, tempoSpawn;
 
 // Controle
 function moverNave(e) {
@@ -59,6 +46,20 @@ canvas.addEventListener('touchmove', moverNave);
 canvas.addEventListener('mousemove', moverNave);
 
 // Funções
+function resetarJogo() {
+    nave = { x: canvas.width / 2, y: canvas.height - 150, w: 70, h: 70, vida: 5 };
+    tiros = [];
+    inimigos = [];
+    tirosInimigos = [];
+    fase = 1;
+    boss = null;
+    mortosNaFase = 0;
+    jogoFinalizado = false;
+    tempoDisparo = 0;
+    tempoSpawn = 0;
+}
+resetarJogo();
+
 function spawnInimigo() {
     inimigos.push({
         x: Math.random() * (canvas.width - 50),
@@ -114,9 +115,18 @@ function atualizar() {
     if (jogoFinalizado) return;
 
     tempoDisparo++;
+    tempoSpawn++;
+
+    // Disparo da nave
     if (tempoDisparo > 15) {
         tiros.push({x: nave.x, y: nave.y - nave.h/2});
         tempoDisparo = 0;
+    }
+
+    // Spawn progressivo de inimigos (enquanto não matou 15)
+    if (!boss && mortosNaFase < 15 && tempoSpawn > 30) {
+        spawnInimigo();
+        tempoSpawn = 0;
     }
 
     tiros.forEach(t => t.y -= 8);
@@ -149,7 +159,7 @@ function atualizar() {
             if (t.x > i.x && t.x < i.x + i.w && t.y > i.y && t.y < i.y + i.h) {
                 i.vida--;
                 t.y = -999;
-                if (i.vida <= 0) inimigosDerrotados++;
+                mortosNaFase++;
             }
         });
         if (boss) {
@@ -170,7 +180,7 @@ function atualizar() {
 
     // Derrota
     if (nave.vida <= 0) {
-        reiniciarJogo();
+        resetarJogo();
         return;
     }
 
@@ -178,41 +188,19 @@ function atualizar() {
     if (boss && boss.vida <= 0) {
         boss = null;
         if (fase >= 21) {
-            jogoFinalizado = true;
-            alert(`Viu amor, as vezes nosso relacionamento vai ser difícil, mas não podemos desistir ❤️`);
+            alert(`A nossa relação é como esse jogo...\nVão ter fases difíceis, isso faz parte...\nMas ainda assim, é só não desistir.\n\nEu te amo ❤️`);
+            resetarJogo();
         } else {
             fase++;
             nave.vida = 5;
-            inimigosDerrotados = 0;
+            mortosNaFase = 0;
         }
     }
 
-    // Spawn de inimigos
-    if (!boss) {
-        if (inimigosDerrotados < 15) {
-            if (Math.random() < 0.03) spawnInimigo();
-        } else if (inimigos.length === 0) {
-            spawnBoss();
-        }
+    // Condição de boss
+    if (!boss && mortosNaFase >= 15) {
+        spawnBoss();
     }
-}
-
-function reiniciarJogo() {
-    nave = {
-        x: canvas.width / 2,
-        y: canvas.height - 150,
-        w: 70,
-        h: 70,
-        vida: 5
-    };
-    tiros = [];
-    inimigos = [];
-    tirosInimigos = [];
-    boss = null;
-    jogoFinalizado = false;
-    tempoDisparo = 0;
-    inimigosDerrotados = 0;
-    fase = 1;
 }
 
 function loop() {
@@ -223,5 +211,5 @@ function loop() {
     requestAnimationFrame(loop);
 }
 
-// Inicializar
+// Início
 loop();
